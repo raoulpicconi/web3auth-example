@@ -1,23 +1,49 @@
-import logo from './logo.svg';
-import './App.css';
+import { useEffect } from 'react';
+import { useAccount, useConnect, useDisconnect, useNetwork } from 'wagmi';
 
 function App() {
+  const { connect, connectors } = useConnect();
+  const { disconnect } = useDisconnect();
+  const { address, status, isConnected, isConnecting, isReconnecting, isDisconnected } =
+    useAccount();
+  const { chain } = useNetwork();
+
+  // Eager connection
+  useEffect(() => {
+    if (!isDisconnected) return;
+    const wagmiConnected = localStorage.getItem('wagmi.connected');
+    const isWagmiConnected = wagmiConnected ? JSON.parse(wagmiConnected) : false;
+
+    if (!isWagmiConnected) return;
+
+    connect({ connector: connectors[0] });
+  }, [connect, connectors]);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className='layout'>
+      <h1>web3auth modal ➕ wagmi</h1>
+      <p>
+        Status:{' '}
+        <code>
+          {status}
+          {status === 'connected' ? '🔥' : ''}
+        </code>
+        {status === 'connected' ? ` to ${chain?.name}` : ''}
+      </p>
+      <p>
+        Address: <code>{address || 'N/A'}</code>
+      </p>
+      <div style={{ marginTop: 20 }}>
+        {isConnecting || isReconnecting ? (
+          <button>Loading</button>
+        ) : isConnected ? (
+          <button onClick={() => disconnect()}>Disconnect</button>
+        ) : (
+          <button onClick={() => connect({ connector: connectors[0] })}>
+            Connect 🔥
+          </button>
+        )}
+      </div>
     </div>
   );
 }
